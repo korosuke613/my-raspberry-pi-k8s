@@ -81,6 +81,15 @@ sudo apt-get update \
   && sudo apt-get autoclean
 ```
 
+## iptabelsをレガシーモードに
+```
+sudo apt-get install -y iptables arptables ebtables
+sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
+sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+sudo update-alternatives --set arptables /usr/sbin/arptables-legacy
+sudo update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+```
+
 ## ホスト名変更
 `k8s-master`の部分は適宜変更
 ```
@@ -242,15 +251,13 @@ $ cat /proc/sys/net/bridge/bridge-nf-call-iptables
 
 ### kubeadmの設定
 ```
-sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 ```
 
 ログ
 ```
-$ sudo kubeadm init --pod-network-cidr=192.168.0.0/16
-W0614 11:40:50.569672   26846 version.go:102] could not fetch a Kubernetes version from the internet: unable to get URL "https://dl.k8s.io/release/stable-1.txt": Get https://dl.k8s.io/release/stable-1.txt: net/http: request canceled (Client.Timeout exceeded while awaiting headers)
-W0614 11:40:50.569847   26846 version.go:103] falling back to the local client version: v1.18.3
-W0614 11:40:50.570162   26846 configset.go:202] WARNING: kubeadm cannot validate component configs for API groups [kubelet.config.k8s.io kubeproxy.config.k8s.io]
+$ sudo kubeadm init --pod-network-cidr=10.244.0.0/16[sudo] password for tibi:
+W0615 14:11:15.542172     878 configset.go:202] WARNING: kubeadm cannot validate component configs for API groups [kubelet.config.k8s.io kubeproxy.config.k8s.io]
 [init] Using Kubernetes version: v1.18.3
 [preflight] Running pre-flight checks
 	[WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
@@ -283,19 +290,19 @@ W0614 11:40:50.570162   26846 configset.go:202] WARNING: kubeadm cannot validate
 [control-plane] Using manifest folder "/etc/kubernetes/manifests"
 [control-plane] Creating static Pod manifest for "kube-apiserver"
 [control-plane] Creating static Pod manifest for "kube-controller-manager"
-W0614 11:41:34.265069   26846 manifests.go:225] the default kube-apiserver authorization-mode is "Node,RBAC"; using "Node,RBAC"
+W0615 14:11:58.647712     878 manifests.go:225] the default kube-apiserver authorization-mode is "Node,RBAC"; using "Node,RBAC"
 [control-plane] Creating static Pod manifest for "kube-scheduler"
-W0614 11:41:34.268456   26846 manifests.go:225] the default kube-apiserver authorization-mode is "Node,RBAC"; using "Node,RBAC"
+W0615 14:11:58.651690     878 manifests.go:225] the default kube-apiserver authorization-mode is "Node,RBAC"; using "Node,RBAC"
 [etcd] Creating static Pod manifest for local etcd in "/etc/kubernetes/manifests"
 [wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
-[apiclient] All control plane components are healthy after 39.511314 seconds
+[kubelet-check] Initial timeout of 40s passed.
+[apiclient] All control plane components are healthy after 42.007373 seconds
 [upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
 [kubelet] Creating a ConfigMap "kubelet-config-1.18" in namespace kube-system with the configuration for the kubelets in the cluster
-[kubelet-check] Initial timeout of 40s passed.
 [upload-certs] Skipping phase. Please see --upload-certs
 [mark-control-plane] Marking the node k8s-master as control-plane by adding the label "node-role.kubernetes.io/master=''"
 [mark-control-plane] Marking the node k8s-master as control-plane by adding the taints [node-role.kubernetes.io/master:NoSchedule]
-[bootstrap-token] Using token: ynu9k9.q8hysemrtytkv97h
+[bootstrap-token] Using token: tbq821.0sb8l974d01z88re
 [bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
 [bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to get nodes
 [bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
@@ -320,8 +327,8 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 192.168.8.120:6443 --token ynu9k9.q8hysemrtytkv97h \
-    --discovery-token-ca-cert-hash sha256:195f828fbb593aaeb777b5c646c4123ed11526811c0e901e6235b59de94de5f5
+sudo kubeadm join 192.168.8.120:6443 --token l9hsr7.hlrcmnotb71cb158 \
+     --discovery-token-ca-cert-hash sha256:bbbeea61421dc474ca4b39e1a16e9411f3db58e6124efb1a33c1aef7f3e6da00
 ```
 
 ### kubectlの設定
@@ -343,45 +350,17 @@ k8s-master   NotReady   master   2m18s   v1.18.3
 echo "source <(kubectl completion bash)" >> ~/.bashrc
 ```
 
-### Calicoのインストール
+### flannelのインストール
 
 ```
-kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
-```
-
-ログ
-```
-$ kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
-configmap/calico-config created
-customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created
-clusterrole.rbac.authorization.k8s.io/calico-kube-controllers created
-clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers created
-clusterrole.rbac.authorization.k8s.io/calico-node created
-clusterrolebinding.rbac.authorization.k8s.io/calico-node created
-daemonset.apps/calico-node created
-serviceaccount/calico-node created
-deployment.apps/calico-kube-controllers created
-serviceaccount/calico-kube-controllers created
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml
 ```
 
 ### Worker Nodeを参加させる
 @k8s-node-1
 ```
-sudo kubeadm join 192.168.8.120:6443 --token ynu9k9.q8hysemrtytkv97h \
-    --discovery-token-ca-cert-hash sha256:195f828fbb593aaeb777b5c646c4123ed11526811c0e901e6235b59de94de5f5
+sudo kubeadm join 192.168.8.120:6443 --token l9hsr7.hlrcmnotb71cb158 \
+     --discovery-token-ca-cert-hash sha256:bbbeea61421dc474ca4b39e1a16e9411f3db58e6124efb1a33c1aef7f3e6da00
 ```
 
 ## できた？
