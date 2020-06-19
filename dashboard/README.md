@@ -3,6 +3,11 @@
 kubectl apply -k .
 ```
 
+#### Get token
+```
+kubectl describe secret -n kubernetes-dashboard admin-user-token-<hoge>
+```
+
 #### Access
 ```
 kubectl proxy
