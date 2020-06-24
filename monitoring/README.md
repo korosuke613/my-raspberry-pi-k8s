@@ -12,5 +12,12 @@ kubectl --namespace monitoring port-forward svc/prometheus-k8s 9090
 kubectl --namespace monitoring port-forward svc/grafana 3000
 ```
 
+open http://localhost:3000
+
+default id/pass
+
+- id: admin
+- pass: admin
+
 
 
