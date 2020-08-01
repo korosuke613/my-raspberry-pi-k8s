@@ -125,13 +125,13 @@ ssh-keygen -t rsa
 ### SSH鍵の登録
 @mac
 ```
-ssh-copy-id -i ~/.ssh/raspberry_rsa pi@192.168.8.120
+ssh-copy-id -i ~/.ssh/raspberry-k8s pi@192.168.8.120
 ```
 
 ### パスワード無しでログインできるか確認
 @mac
 ```
-ssh -i ~/.ssh/raspberry_rsa pi@192.168.8.120
+ssh -i ~/.ssh/raspberry-k8s pi@192.168.8.120
 ```
 
 ### sshを楽にする
@@ -327,8 +327,8 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-sudo kubeadm join 192.168.8.120:6443 --token l9hsr7.hlrcmnotb71cb158 \
-     --discovery-token-ca-cert-hash sha256:bbbeea61421dc474ca4b39e1a16e9411f3db58e6124efb1a33c1aef7f3e6da00
+kubeadm join 192.168.8.120:6443 --token rl8qlt.7llq56jsf7tqsnis \
+    --discovery-token-ca-cert-hash sha256:6b934df91a2adb5af7a9b6aa2fcb02e29f9253a0c48d52e356ea0e7d8b4f9d31
 ```
 
 ### kubectlの設定
@@ -359,8 +359,8 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134
 ### Worker Nodeを参加させる
 @k8s-node-1
 ```
-sudo kubeadm join 192.168.8.120:6443 --token l9hsr7.hlrcmnotb71cb158 \
-     --discovery-token-ca-cert-hash sha256:bbbeea61421dc474ca4b39e1a16e9411f3db58e6124efb1a33c1aef7f3e6da00
+sudo kubeadm join 192.168.8.120:6443 --token rl8qlt.7llq56jsf7tqsnis \
+    --discovery-token-ca-cert-hash sha256:6b934df91a2adb5af7a9b6aa2fcb02e29f9253a0c48d52e356ea0e7d8b4f9d31
 ```
 
 ## できた？
@@ -440,4 +440,26 @@ $ kubectl get nodes
 NAME         STATUS   ROLES    AGE   VERSION
 k8s-master   Ready    master   39m   v1.18.3
 k8s-node-1   Ready    <none>   28m   v1.18.3
+```
+
+## SDカードのバックアップ
+master, workerをシャットダウンする。
+バックアップをとるSDカードをmacに接続する
+
+@mac
+```
+$ diskutil list
+....
+/dev/disk11 (external, physical):
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:     FDisk_partition_scheme                        *32.0 GB    disk11
+   1:             Windows_FAT_32 boot                    268.4 MB   disk11s1
+   2:                      Linux                         31.7 GB    disk11s2
+```
+
+sdカードっぽいやつのパスがわかる(`/dev/disk11`)
+
+```
+$ diskutil umountDisk /dev/disk11 
+$ sudo dd if=/dev/disk11 of=raspi-node-1.img bs=4m 
 ```
